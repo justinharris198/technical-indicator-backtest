@@ -13,6 +13,7 @@ import pandas as pd
 import sys as sys
 import math
 import talib
+import xlsxwriter as xlsx
 pd.options.mode.chained_assignment = None
 '''
 Instructions:
@@ -396,6 +397,57 @@ def visualize_analysis_pyplot(x_return,y_return,x_win_loss,y_win_loss,x_percent,
     vals = plt.gca().get_yticks()
     plt.gca().set_yticklabels(['{:3.0f}%'.format(x*100) for x in vals])
     plt.show()
+def output_to_excel():
+    asdf = {'Volatility':[volatility],'Win percentage':[win_percentage],'Win to Loss':[win_to_loss],'Max Drawdown':[max_draw_down],'Cumulative Return':[cumulative_returns_percent],'Average Days in Trade':[average_trade_length],'Average profit to risked':[avg_profit/dollar_per_trade]}
+    summary = pd.DataFrame(asdf)
+    trades_executed = stats[['security','days_in_trade','running_profit','trade_open','trade_close','trade_tracker']]
+    trades_executed.columns = ['Security', 'Days in trade','Trade profit, base risk', 'Open Price', 'Close Price', 'Long/Short']
+    analysis_by_security = pd.concat([avg_win_loss_by_security,win_percent_by_security,avg_win_to_risk_by_security,number_of_trades_by_security],axis=1)
+    analysis_by_security.columns = ['Win Loss Ratio','Win Percent','Average Profit to Risk','Number of Trades']
+    analysis_by_year = pd.concat([win_loss_by_year,win_percent,profit_by_year,number_of_trades_per_year],axis=1)
+    analysis_by_year.columns = ['Win Loss Ratio','Win Percent','Average Profit to Risk','Number of Trades']
+    writer = pd.ExcelWriter('strategy_analysis.xlsx', engine='xlsxwriter')
+    summary.to_excel(writer, sheet_name = 'Summary')
+    trades_executed.to_excel(writer, sheet_name='Strategy Trades')
+    analysis_by_security.to_excel(writer, sheet_name='By Security')
+    analysis_by_year.to_excel(writer, sheet_name='By Year')
+    compound_growth.to_excel(writer,sheet_name='Cumulative Returns')
+    workbook = writer.book
+    percent_format = workbook.add_format({'num_format': '0.0%'})
+    number_format = workbook.add_format({'num_format': '0.0'})
+    date_format = workbook.add_format({'num_format': 'm/d/yyyy'})
+    worksheet = writer.sheets['Summary']
+    worksheet.set_column('A:A', 0, number_format)
+    worksheet.set_column('B:B', 24, number_format)
+    worksheet.set_column('C:G', 24, percent_format)
+    worksheet.set_column('H:H', 24, number_format)
+    writer.sheets['By Year'].set_column('B:B', 24, number_format)
+    writer.sheets['By Year'].set_column('C:D', 24, percent_format)
+    writer.sheets['By Year'].set_column('E:E', 24, number_format)
+    writer.sheets['Cumulative Returns'].set_column('A:A', 24, date_format)
+    writer.sheets['Cumulative Returns'].set_column('B:B', 24, number_format)
+    chart1 = workbook.add_chart({'type': 'line'})
+    chart2 = workbook.add_chart({'type': 'line'})
+    chart3 = workbook.add_chart({'type': 'line'})
+    chart4 = workbook.add_chart({'type': 'line'})
+    chart1.set_size({'width': 640, 'height': 400})
+    chart2.set_size({'width': 640, 'height': 400})
+    chart3.set_size({'width': 640, 'height': 400})
+    chart4.set_size({'width': 640, 'height': 400})
+    cumulative_returns_length = len(compound_growth.index)
+    chart1.add_series({'values': '=\'Cumulative Returns\'!$B$2:$B$'+ str(cumulative_returns_length),'name':'Portfolio Value','categories':'=\'Cumulative Returns\'!$A$2:$A$'+ str(cumulative_returns_length)})
+    chart2.add_series({'values': '=\'By Year\'!$B$2:$B$'+ str(len(analysis_by_year.index)),'name':'Win/Loss Ratio','categories': '=\'By Year\'!$A$2:$A$'+ str(len(analysis_by_year.index))})
+    chart3.add_series({'values': '=\'By Year\'!$C$2:$C$'+ str(len(analysis_by_year.index)),'name':'Win Percent','categories': '=\'By Year\'!$A$2:$A$'+ str(len(analysis_by_year.index))})
+    chart4.add_series({'values': '=\'By Year\'!$D$2:$D$'+ str(len(analysis_by_year.index)),'name':'Average Profit to Risk','categories': '=\'By Year\'!$A$2:$A$'+ str(len(analysis_by_year.index))})
+    chart1.set_legend({'position': 'bottom'})
+    chart2.set_legend({'position': 'bottom'})
+    chart3.set_legend({'position': 'bottom'})
+    chart4.set_legend({'position': 'bottom'})
+    worksheet.insert_chart('B4', chart1)
+    worksheet.insert_chart('F4', chart2)
+    worksheet.insert_chart('B24', chart3)
+    worksheet.insert_chart('F24', chart4)
+    writer.save()
 #script that run the model
 dollar_per_trade = starting_portfolio_value * risk_percent_per_trade
 portfolio = initialize_portfolio(start_date,end_date,starting_portfolio_value)
@@ -442,14 +494,15 @@ for i in range(len(stats.index)):
 cumulative_returns_percent = ((compound_growth['compound_growth'][len(compound_growth.index)-1] / compound_growth['compound_growth'][0]) ** (1.0/((pd.to_datetime(end_date) - pd.to_datetime(compound_growth.index[0],format='%Y%m%d')).days/365))-1)
 avg_win_loss_by_security = abs(stats[stats["running_profit"]>0].groupby(['security']).mean()['running_profit'] / stats[stats["running_profit"]<0].groupby(['security']).mean()['running_profit'])
 win_percent_by_security = stats[stats["running_profit"]>0].groupby(['security']).count()['running_profit'] / stats.groupby(['security']).count()['running_profit']
+number_of_trades_by_security = stats.groupby(['security']).count()['running_profit']
+avg_win_to_risk_by_security = abs(stats.groupby(['security']).mean()['running_profit'] / dollar_per_trade)
 win_percent = abs(stats[stats["running_profit"]>0]['running_profit'].groupby(stats[stats["running_profit"]>0].index.map(lambda x: x.year)).count() / stats['running_profit'].groupby(stats.index.map(lambda x: x.year)).count())
 number_of_trades_per_year = stats['running_profit'].groupby(stats.index.map(lambda x: x.year)).count()
 win_loss_by_year = abs(stats[stats["running_profit"]>0]['running_profit'].groupby(stats[stats["running_profit"]>0].index.map(lambda x: x.year)).mean() / stats[stats["running_profit"]<0]['running_profit'].groupby(stats[stats["running_profit"]<0].index.map(lambda x: x.year)).mean())
+profit_by_year = abs(stats['running_profit'].groupby(stats.index.map(lambda x: x.year)).mean() / dollar_per_trade)
 
 #output
-#pyplot graph
+#pyplot graphs
 visualize_analysis_pyplot(compound_growth.index,compound_growth['compound_growth'],win_loss_by_year.index,win_loss_by_year,win_percent.index,win_percent)
 #excel
-
-
-        
+output_to_excel()
