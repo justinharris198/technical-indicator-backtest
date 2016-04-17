@@ -12,6 +12,7 @@ I introduced this software because I found other programs lacking. Problems I've
 6. Not incorporating enough history to judge if profitability is increasing or decreasing over time
 
 So I created this software that takes these things into account:
+
 1. Pulls from Quandl and can run an aggregated analysis on any number of securities
 2. Incorporates a stop loss methodology as technical time series that dynamically change for trailing stop methodologies as well as event driven stop losses that can trigger if an event occurs, such as an adx min/plus crossover
 3. The percent of portfolio risked on each trade is defined at the beginning of the script. The size is calculated as dollar risked on trade divided by the distanct from open to the stop, so that if the stop is hit and the exit price is the stop price, than the loss to the account will equal the percent risked on the trade.
