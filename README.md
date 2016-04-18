@@ -50,4 +50,4 @@ That's it! The entry has been set!
 
 #IV. Run the model.
 
-The model will output into an excel spreadsheet labeled strategy_analysis.xlsx in the same folder as the python script.
+The model will output 3 pyplot graphs with 6 summary data points on the cumulative returns graph and will output an excel spreadsheet labeled strategy_analysis.xlsx in the same folder as the python script.
