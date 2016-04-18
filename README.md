@@ -25,8 +25,8 @@ So I created this software that takes these things into account:
 #II. Specifying the entry condition (with example)
 
 1. Scroll to entry_model()
-2. Create a pandas time series that will act as the condition. For example, if testing a moving average model, you could use ta-lib or pandas mean(). When I tested, I used pandas mean() to find the price average over a certain number of days. The script will input the data pulled from quandl into this function for the analysis, so when defining the function you want to test, use either security_time_series['Settle'],security_time_series['Open'],security_time_series['High'] or security_time_series['Low'] as the price series input.
-3. Name you data.
+2. Create a pandas dataframe time series that will act as the condition. For example, if testing a moving average model, you could use ta-lib or pandas mean(). When I tested, I used pandas mean() to find the price average over a certain number of days. The script will input the data pulled from quandl into this function for the analysis, so when defining the function you want to test, use either security_time_series['Settle'],security_time_series['Open'],security_time_series['High'] or security_time_series['Low'] as the price series input.
+3. Name your data.
 4. Concatenate the time series onto security_time_series.
 5. Define the signal in trade_trigger()
 
@@ -35,4 +35,17 @@ Case study: Enter long into a security when price closes above the 200 day movin
 2. Pandas has a mean function which outputs a Series. We need to have a Dataframe, so this will be a 2 step process. Defining the mean, we have ma = pd.rolling_mean(security_time_series['Settle'],200), which gives the 200 day moving average. Translating into the right format we have ma = pd.DataFrame(ma,index=security_time_series.index). The 'index = security_time_series.index' just verifies that we use the same dates for both series, so when we join them together, we'll have the correct average on the right dates.
 3. Name the column, ma.columns = ['moving_average_two_hundred_days']
 4. Add the time series ma to the list in h = pd.concat([security_time_series,...,])
-5. Define the trade trigger criteria. 
+5. Define the trade trigger criteria. In this case, the trigger needs to be when the settle price is > than the moving average for a long and < moving average for a short. Long: h['Settle'] > h['moving_average_two_hundred_days']. Long: h['Settle'] < h['moving_average_two_hundred_days'].
+
+That's it! The entry has been set!
+
+#III. Specifying the exit signal.
+
+1. Find exit_model()
+2. Create pandas dataframe time series which will serve as the exit condition.
+3. Name the new time series.
+4. Define an exit condition that overrides the initial stop.
+5. Concatenate the time series.
+6. Update short() and long() for complex stops (ie adx min/plus crossover). If there is no complex logic, set return in short and long to slp and ssp respectively. The script is set up to follow the simple stop, or to equal the close if the complex logic is hit.
+
+
