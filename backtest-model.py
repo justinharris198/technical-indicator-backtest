@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Nov 02 16:46:02 2015
-
-@author: jharris
-"""
 import Quandl
 import datetime as d
 import matplotlib.pyplot as plt
@@ -24,7 +18,7 @@ Instructions:
 '''
 #user defined inputs
 quandl_authtoken = ''
-tested_securities = ['CURRFX/EURUSD','CURRFX/AUDUSD','CURRFX/GBPUSD']
+tested_securities = ['CURRFX/EURUSD','CURRFX/AUDUSD']
 start_date = d.date(1960,01,01)
 end_date = d.date(2015,12,01)
 starting_portfolio_value = 10000.0
