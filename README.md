@@ -48,4 +48,6 @@ That's it! The entry has been set!
 5. Concatenate the time series.
 6. Update short() and long() for complex stops (ie adx min/plus crossover). If there is no complex logic, set return in short and long to slp and ssp respectively. The script is set up to follow the simple stop, or to equal the close if the complex logic is hit.
 
+#IV. Run the model.
 
+The model will output into an excel spreadsheet labeled strategy_analysis.xlsx in the same folder as the python script.
