@@ -1,0 +1,32 @@
+country_code,ticker,type,allocation
+USA,^GSPC,SandP 500,1
+USA,^IXIC,Nasdaq Composite,1
+USA,^RUT,Russell 2000,1
+GBR,^FTSE,FTSE 100,1
+DEU,^GDAXI,German DAX,1
+FRA,^FCHI,French CAC,1
+BEL,^BFX,Belgium 20,1
+JPN,^N225,Nikkei 225,1
+HKG,^HSI,Hang Seng,1
+CHN,000001.SS,Shanghai,1
+SGP,^STI,STI Index (Singapore),1
+AUS,^AXJO,ASX 200 (Australia),1
+AUS,^AORD,All Ordinaries (Australia),1
+IND,^BSESN,Bombay Stock Exchange,1
+IDN,^JKSE,Jakarta Stock Exchange,1
+MYS,^KLSE,Bursa Malaysia,1
+NZL,^NZ50,New Zealand 50,1
+KOR,^KS11,"KOSPI, Korean Stock Exchange",1
+CHN,^TWII,Taiwan Weighted Index,1
+CAN,^GSPTSE,Toronto Exchange,1
+BRA,^BVSP,Brazilian Stock Exchange,1
+MEX,^MXX,Mexican Stock Exchange,1
+CHL,^IPSA,Chile,1
+ARG,^MERV,Argentina,1
+ISR,^TA100,Israel,1
+ESP,^IBEX,Spain,1
+SWE,^OMX,Sweden,1
+NOR,^OSEAX,Norway,1
+CHE,^SSMI,Switzerland,1
+RUS,RTS.RS,Russia,1
+ZAF,EZA,South Africa,1
