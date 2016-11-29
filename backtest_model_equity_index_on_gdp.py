@@ -1,18 +1,11 @@
-import datetime as d
 import pandas as pd
-import pandas.io.sql as pds
-#import psycopg2
-#import talib
 import quandl
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.finance as finance
 import matplotlib.dates as mdates
 import datetime
 import xlsxwriter as xl
 import pandas_datareader.data as web
-import psycopg2
-
 def visualize_analysis_pyplot(x_return,y_return):
     plt.figure(figsize=(12,8))
     plt.ylabel('Portfolio Value',fontsize=16)
@@ -22,48 +15,7 @@ def visualize_analysis_pyplot(x_return,y_return):
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))
     plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5,maxticks=10))
     plt.gcf().autofmt_xdate()
-    #plt.gcf().text(.15,.85,'Volatility: ' + '{0:.1f}%'.format(volatility*100), fontsize=12)
-    #plt.gcf().text(.15,.825,'Win percentage: ' + '{0:.1f}%'.format(win_percentage*100), fontsize=12)
-    #plt.gcf().text(.15,.8,'Win to loss: ' + '{0:.1f}'.format(win_to_loss), fontsize=12)
-    #plt.gcf().text(.15,.775,'Max draw down: ' + '{0:.1f}%'.format(max_draw_down*100), fontsize=12)
-    #plt.gcf().text(.15,.75,'Cumulative returns percent: ' + '{0:.1f}%'.format(cumulative_returns_percent*100), fontsize=12)
-    #plt.gcf().text(.15,.725,'Average trade length: ' + '{0:.1f}'.format(average_trade_length), fontsize=12)
-    #plt.gcf().text(.15,.7,'Average profit to risk: ' + '{0:.1f}%'.format(avg_profit/dollar_per_trade*100), fontsize=12)
     plt.show()
-indicies = [
-'^GSPC',
-'^IXIC',
-'^RUT',
-'^FTSE',
-'^GDAXI',
-'^FCHI',
-'^BFX',
-'^N225',
-'^HSI',
-'000001.SS',
-'^STI',
-'^AXJO',
-'^AORD',
-'^BSESN',
-'^JKSE',
-'^KLSE',
-'^NZ50',
-'^KS11',
-'^TWII',
-'^GSPTSE',
-'^BVSP',
-'^MXX',
-'^IPSA',
-'^MERV',
-'^TA100',
-'^IBEX',
-'^OMX',
-'^OSEAX',
-'^SSMI',
-'RTS.RS',
-'EZA'
-
-]
 class portfolio:
     def __init__(self,firstDate,startingValue):
         self.dailyHoldings = dict()
@@ -114,14 +66,12 @@ class portfolio:
             currentPortfolioValue += holdingValue
         return currentPortfolioValue
 class model:
-    def __init__(self):
+    def __init__(self,countries,country_weights):
         self.dailyRankings = dict()
         self.recommendations = []
-        self.weightedGDP = self.gdpData()
-    def gdpData(self):
+        self.weightedGDP = self.gdpData(countries,country_weights)
+    def gdpData(self,countries,country_weights):
         gdpDf = pd.DataFrame({'Value':[],'country_code':[]})
-        country_weights = pd.read_csv('country_indices.csv')
-        countries = country_weights.country_code.unique()
         for i in countries:
             gdp = quandl.get("WWDI/"+i+"_NY_GDP_MKTP_KN", authtoken='')
             gdp['country_code'] = i
@@ -269,8 +219,8 @@ class marketData:
         timeSeries = timeSeries[(timeSeries.pctChangeDay < .5) & (timeSeries.pctChangeDay > -.5)][['Open','High','Low','Close']]
         return timeSeries
 class backtester:
-    def __init__(self,tickerList,startingValue,minSize,maxSize):
-        self.model = model()
+    def __init__(self,tickerList,startingValue,minSize,maxSize,country_weights,countries):
+        self.model = model(countries,country_weights)
         self.trader = trader(minSize,maxSize)        
         self.marketData = marketData(tickerList,'pd-datareader')
         self.portfolio = portfolio(self.marketData.timeSeriesPanel.axes[1][0],startingValue)
@@ -311,7 +261,10 @@ class backtester:
             marketDateMonthPrev = marketDate.month
 backTestStartOffset = 252
 startingValue = 1000000
-bbc = backtester(indicies,startingValue,.03,.25)
+country_weights = pd.read_csv('country_indices.csv')
+countries = country_weights.country_code.unique()
+tickerList = country_weights.ticker.unique()
+bbc = backtester(tickerList,startingValue,.03,.25,country_weights,countries)
 bbc.startBacktest(backTestStartOffset)
 
 visualize_analysis_pyplot(bbc.portfolio.equityCurve.index,bbc.portfolio.equityCurve.portfolio)
