@@ -1,4 +1,4 @@
-import Quandl
+import quandl as Quandl
 import datetime as d
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -18,11 +18,11 @@ Instructions:
 '''
 #user defined inputs
 quandl_authtoken = ''
-tested_securities = ['CURRFX/EURUSD','CURRFX/AUDUSD']
-start_date = d.date(1960,01,01)
+tested_securities = ['CURRFX/EURUSD','CURRFX/AUDUSD','CURRFX/GBPUSD','CURRFX/USDCAD','CURRFX/NZDUSD','CURRFX/USDJPY']
+start_date = d.date(2000,01,01)
 end_date = d.date(2015,12,01)
-starting_portfolio_value = 10000.0
-risk_percent_per_trade = .05
+starting_portfolio_value = 100000.0
+risk_percent_per_trade = .025
 margin_requirement = .1
 
 #inputs for entry_model() and exit_model() for already defined time series
@@ -37,7 +37,7 @@ adx_trend_strength = 0
 std = 1
 maxxx = 55
 ma_days = 200
-days = 3
+days = 10
 increment = .02     
 max_amount = .2
 atr_days = 10
@@ -130,9 +130,9 @@ def entry_model(security_time_series,macd_slow,macd_fast,macd_ma,adx_days,rsi_da
     rsi = pd.DataFrame({'rsi':pd.Series(rsi,index=security_time_series.index)})
     h = pd.concat([security_time_series,adx_dm15,ma,mini,maxi,macd,adx_min_shift,adx_plus_shift,adx_min_shift_two,adx_plus_shift_two,adx_min_shift_three,adx_plus_shift_three,adx_min_shift_four,adx_plus_shift_four,adx_min_shift_five,adx_plus_shift_five,adx_min_shift_six,adx_plus_shift_six,macd_shift,rsi,adx_min,adx_plus,adx,adx_min_average,adx_plus_average,adx_average,bbands,bbands_shift,sar,sar_prev],axis=1)  
     def trade_trigger(h):
-        if h['adx_min'] < h['adx_plus'] and h['adx_minprev'] > h['adx_plusprev']:
+        if h['maxi'] < h['Settle']:
             return 1
-        elif h['adx_min'] > h['adx_plus'] and h['adx_minprev'] < h['adx_plusprev']:
+        elif h['mini'] > h['Settle']:
             return -1
         else:
             return 0
@@ -175,8 +175,10 @@ def exit_model(sts_trade,days,atr_multiplier,ma_days,days_two):
     adx_plus_shift_five =  pd.DataFrame(talib.PLUS_DI(np.array(sts_trade.shift(5)['High']),np.array(sts_trade.shift(5)['Low']),np.array(sts_trade.shift(5)['Settle']),timeperiod = adx_days),columns=['adx_plusprev_five'],index=sts_trade.index)   
     adx_min_shift_six =  pd.DataFrame(talib.MINUS_DI(np.array(sts_trade.shift(6)['High']),np.array(sts_trade.shift(6)['Low']),np.array(sts_trade.shift(6)['Settle']),timeperiod = adx_days),columns=['adx_minprev_six'],index=sts_trade.index)
     adx_plus_shift_six =  pd.DataFrame(talib.PLUS_DI(np.array(sts_trade.shift(6)['High']),np.array(sts_trade.shift(6)['Low']),np.array(sts_trade.shift(6)['Settle']),timeperiod = adx_days),columns=['adx_plusprev_six'],index=sts_trade.index)    
-    roll_max = pd.DataFrame(pd.rolling_max(sts_trade['High'],days),columns=['stop_short'])
-    roll_min = pd.DataFrame(pd.rolling_min(sts_trade['Low'],days),columns=['stop_long'])
+    roll_max = pd.DataFrame(pd.rolling_max(sts_trade['High'],days))
+    roll_max.columns = ['stop_short']
+    roll_min = pd.DataFrame(pd.rolling_min(sts_trade['Low'],days))
+    roll_min.columns = ['stop_long']
     atr = talib.ATR(np.array(sts_trade['High']),np.array(sts_trade['Low']),np.array(sts_trade['Settle']),timeperiod = 18)
     stop = sts_trade['Settle'] + atr*atr_multiplier
     stop_short_post = pd.DataFrame(stop)
@@ -195,8 +197,10 @@ def exit_model(sts_trade,days,atr_multiplier,ma_days,days_two):
             return h['ssp']
         else:
             return h['ssp']
-    stop_long_post = pd.DataFrame(pd.rolling_min(sts_trade['Low'],days_two),columns=['stop_long_post'])
-    stop_short_post = pd.DataFrame(pd.rolling_max(sts_trade['High'],days_two),columns=['stop_short_post'])    
+    stop_long_post = pd.DataFrame(pd.rolling_min(sts_trade['Low'],days_two))
+    stop_long_post.columns=['stop_long_post']
+    stop_short_post = pd.DataFrame(pd.rolling_max(sts_trade['High'],days_two))
+    stop_short_post.columns=['stop_short_post']
     #stop_long_post = pd.DataFrame(sts_trade.apply(short,axis=1),columns=['stop_long_post'])
     #stop_short_post = pd.DataFrame(sts_trade.apply(long_,axis=1),columns=['stop_short_post'])
     sts_trade = pd.concat([sts_trade,stop_long_post,stop_short_post],axis=1)
